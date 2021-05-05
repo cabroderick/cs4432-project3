@@ -1,11 +1,12 @@
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.Scanner;
 
 public class App {
-    static Hashtable<Integer, String> datasetATable = new Hashtable<>(); // hashtable for dataset A
-    static Hashtable<Integer, String> datasetBTable = new Hashtable<>(); // hashtable for dataset B
+    static LinkedList<String>[] tableA = new LinkedList[500]; // hash table for dataset A with 50 buckets
+    static final int buckets = 500; // the number of buckets in the table
 
     public static void main(String[] args) throws Exception {
         getInput();
@@ -25,45 +26,72 @@ public class App {
     private static void buildHashtable () { // builds the hashtable on dataset A
         try {
             for (int F = 1; F <= 99; F++) { // iterate through each file in the dataset directory
-                String fileNameA = System.getProperty("user.dir")+"/Project3Dataset-A/A"+F+".txt";
-                String fileNameB = System.getProperty("user.dir")+"/Project3Dataset-B/B"+F+".txt";
-                System.out.println(fileNameA);
-                File fileA = new File(fileNameA);
-                File fileB = new File(fileNameB);
-                Scanner scannerA = new Scanner(fileA);
-                Scanner scannerB = new Scanner(fileB);
-                String dataA = scannerA.nextLine();
-                String dataB = scannerB.nextLine();
+                String fileName = System.getProperty("user.dir")+"/Project3Dataset-A/A"+F+".txt";
+                Scanner scanner = new Scanner(new File(fileName));
+                String data = scanner.nextLine();
                 for (int R = 0; R < 100; R++) { // iterate through each record, each record is 40 characters long
-                    // the desired byte range is (40*r + 32) to (40*r + 36)
-                    int beginIndex = 40*R + 33;
-                    int endIndex = 40*R + 37;
-
-                    Integer k = Integer.parseInt(dataA.substring(beginIndex, endIndex));
-                    int O = R*40; // the offset #, record # * 40 since each record is of size 40 bytes
-                    String v = Integer.toString(F)+"-"+Integer.toString(O);
-                    // now add values to hashtable
-                    datasetATable.put(k, v);
-
-                    // do the same for table B
-                    k = Integer.parseInt(dataB.substring(beginIndex, endIndex));
-                    O = R*40; // the offset #, record # * 40 since each record is of size 40 bytes
-                    v = Integer.toString(F)+"-"+Integer.toString(O);
-                    // now add values to hashtable
-                    datasetBTable.put(k, v);
+                    String record = getRecord(data, R);
+                    int randomV = getRandomV(record);
+                    put(randomV, record); // add the value to the table
                 }
-                scannerA.close();
-                scannerB.close();
             }
         } catch (IOException e) {
             System.out.println("Invalid filename");
         }
     }
 
-    private static void joinTables () { // join the two tables on RandomV
-        System.out.println("")
-        for (int i = 1; i < 500; i++) { // iterate through every bucket in each table
+    // hashes the randomV value to yield a bucket value
+    private static int hashFunction (int randomV) {
+        return randomV % buckets;
+    }
 
+    // puts a value into the hashtable
+    private static void put (int key, String value) {
+        int bucket = hashFunction(key);
+        if (tableA[bucket] == null) {
+            tableA[bucket] = new LinkedList<>();
+        }
+        tableA[bucket].add(value);
+    }
+
+    // gets the value of RandomV from a specified record
+    private static int getRandomV (String record) {
+        return Integer.parseInt(record.substring(33, 37));
+    }
+
+    // extracts the record data from an entire file in a string
+    private static String getRecord (String data, int R) {
+        return data.substring(40*R, 40*R + 40);
+    }
+
+    private static void joinTables () { // join the two tables on RandomV
+        try {
+            long startTime = System.currentTimeMillis();
+            System.out.println("A.Col1\t\tA.Col2\t\tB.Col1\t\tB.Col2");
+            for (int F = 1; F < 99; F++) {
+                String fileName = System.getProperty("user.dir")+"/Project3Dataset-B/B"+F+".txt";
+                Scanner scanner = new Scanner(new File(fileName));
+                String data = scanner.nextLine();
+                scanner.close();
+                for (int R = 0; R < 100; R++) {
+                    String recordB = getRecord(data, R);
+                    int randomVB = getRandomV(recordB);
+                    int bucket = hashFunction(randomVB);
+                    for (String recordA : tableA[bucket]) {
+                        int randomVA = getRandomV(recordA);
+                        if (randomVA == randomVB) { // the two randomV values match
+                            String[] colsA = recordA.split(", ");
+                            String[] colsB = recordB.split(", ");
+                            System.out.println(colsA[0] + "\t" + colsA[1] + "\t\t" + colsB[0] + "\t" + colsB[1]);
+                        }
+                    }
+                }
+            }
+            long endTime = System.currentTimeMillis();
+            long elapsedTime = endTime - startTime;
+            System.out.println("The command took " + elapsedTime + " milliseconds to execute.");
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
         }
     }
 }
