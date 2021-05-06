@@ -6,6 +6,7 @@ import java.util.Scanner;
 
 public class App {
     static LinkedList<String>[] tableA = new LinkedList[500]; // hash table for dataset A with 50 buckets
+    static String[] arrayA = new String[9900]; // array for dataset A
     static final int buckets = 500; // the number of buckets in the table
 
     public static void main(String[] args) throws Exception {
@@ -17,8 +18,20 @@ public class App {
         Scanner scanner = new Scanner(System.in);
         String command = scanner.nextLine();
         if (command.equals("SELECT A.Col1, A.Col2, B.Col1, B.Col2 FROM A, B WHERE A.RandomV = B.RandomV")) {
+            long startTime = System.currentTimeMillis();
             buildHashtable();
             joinTables();
+            long endTime = System.currentTimeMillis();
+            long elapsedTime = endTime - startTime;
+            System.out.println("The command took " + elapsedTime + " milliseconds to execute.");
+        }
+        if (command.equals("SELECT count(*) FROM A, B WHERE A.RandomV > B.RandomV")) {
+            long startTime = System.currentTimeMillis();
+            buildArray();
+            selectCount();
+            long endTime = System.currentTimeMillis();
+            long elapsedTime = endTime - startTime;
+            System.out.println("The command took " + elapsedTime + " milliseconds to execute.");
         }
         getInput();
     }
@@ -66,9 +79,8 @@ public class App {
 
     private static void joinTables () { // join the two tables on RandomV
         try {
-            long startTime = System.currentTimeMillis();
             System.out.println("A.Col1\t\tA.Col2\t\tB.Col1\t\tB.Col2");
-            for (int F = 1; F < 99; F++) {
+            for (int F = 1; F <= 99; F++) {
                 String fileName = System.getProperty("user.dir")+"/Project3Dataset-B/B"+F+".txt";
                 Scanner scanner = new Scanner(new File(fileName));
                 String data = scanner.nextLine();
@@ -87,11 +99,54 @@ public class App {
                     }
                 }
             }
-            long endTime = System.currentTimeMillis();
-            long elapsedTime = endTime - startTime;
-            System.out.println("The command took " + elapsedTime + " milliseconds to execute.");
         } catch (FileNotFoundException e) {
             System.out.println("File not found");
         }
+    }
+
+    // builds the array of records
+    private static void buildArray () {
+        try {
+            for (int F = 1; F <= 99; F++) {
+                String fileName = System.getProperty("user.dir")+"/Project3Dataset-A/A"+F+".txt";
+                Scanner scanner = new Scanner(new File(fileName));
+                String data = scanner.nextLine();
+                scanner.close();
+                for (int R = 0; R < 100; R++) {
+                    String record = getRecord(data, R);
+                    arrayA[(F-1)*100 + R] = record;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
+        }
+    }
+
+    // selects the count of matching records where A.RandomV > B.RandomV
+    private static void selectCount () {
+        try { 
+            int count = 0; // the count of qualifying records
+            for (int F = 1; F <= 99; F++) {
+                String fileName = System.getProperty("user.dir")+"/Project3Dataset-A/A"+F+".txt";
+                Scanner scanner = new Scanner(new File(fileName));
+                String data = scanner.nextLine();
+                scanner.close();
+                for (int R = 0; R < 100; R++) {
+                    String recordB = getRecord(data, R);
+                    int randomVB = getRandomV(recordB);
+                    for (int i = 0; i < arrayA.length; i++) {
+                        String recordA = arrayA[i];
+                        int randomVA = getRandomV(recordA);
+                        if (randomVA > randomVB) {
+                            count++;
+                        }
+                    }
+                }
+            }
+            System.out.println(count);
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
+        }
+        
     }
 }

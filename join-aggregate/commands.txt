@@ -1,1 +1,2 @@
 SELECT A.Col1, A.Col2, B.Col1, B.Col2 FROM A, B WHERE A.RandomV = B.RandomV
+SELECT count(*) FROM A, B WHERE A.RandomV > B.RandomV
