@@ -33,6 +33,18 @@ public class App {
             long elapsedTime = endTime - startTime;
             System.out.println("The command took " + elapsedTime + " milliseconds to execute.");
         }
+        if (command.substring(0, 11).equals("SELECT Col2")) {
+            long startTime = System.currentTimeMillis();
+
+            String[] splitCommand = command.split(" ");
+            String aggregationFunction = splitCommand[2];
+            String dataset = splitCommand[4];
+            hashAggregation(aggregationFunction, dataset);
+
+            long endTime = System.currentTimeMillis();
+            long elapsedTime = endTime - startTime;
+            System.out.println("The command took " + elapsedTime + " milliseconds to execute.");
+        }
         getInput();
     }
 
@@ -148,5 +160,10 @@ public class App {
             System.out.println("File not found");
         }
         
+    }
+
+    // performs hash-based aggregation
+    public static void hashAggregation (String aggregationFunction, String dataset) {
+
     }
 }
