@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Scanner;
 
@@ -164,6 +165,38 @@ public class App {
 
     // performs hash-based aggregation
     public static void hashAggregation (String aggregationFunction, String dataset) {
+        try {
+            Hashtable<String, Integer> aggregationTable = new Hashtable<>();
+            for (int F = 1; F <= 99; F++) {
+                String fileName = System.getProperty("user.dir")+"/Project3Dataset-"+dataset+"/"+dataset+F+".txt";
+                Scanner scanner = new Scanner(new File(fileName));
+                String data = scanner.nextLine();
+                scanner.close();
+                for (int R = 0; R < 100; R++) {
+                    String record = getRecord(data, R);
+                    int randomV = getRandomV(record);
+                    String[] cols = record.split(", ");
+                    String col2 = cols[1];
 
+                    if (aggregationTable.get(col2) == null) { // there is no mapping for the key yet
+                        aggregationTable.put(col2, randomV);
+                    } else {
+                        int total = aggregationTable.get(col2) + randomV;
+                        aggregationTable.put(col2, total);
+                    }
+                }
+            }
+            System.out.println("Col2\t\t"+aggregationFunction);
+            for (String key : aggregationTable.keySet()) {
+                if (aggregationFunction.equals("AVG(RandomV)")) {
+                    int avg = aggregationTable.get(key) / 99;
+                    System.out.println(key+"\t\t"+avg);
+                } else {
+                    System.out.println(key+"\t\t"+aggregationTable.get(key));
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
+        }
     }
 }
